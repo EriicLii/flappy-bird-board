@@ -9,4 +9,4 @@ The triple pad design of switches S1 and S3 is done intentionally to be compatib
 
 S2 is the button used primarily for jumping in the game, which a default-off momentary push button would be ideal for.
 
-U3 is a boost converter module that provides 5v to power the circuit. It is meant to be separate from the perfboard, and take the input from two AAA batteries to allow the board to be portable. The boost converter is optional aand can be swapped out with any stable 5v input such as USB. 
+U3 is a boost converter module that provides 5v to power the circuit. It is meant to be separate from the perfboard, and take the input from two AAA batteries to allow the board to be portable. The boost converter is optional and can be swapped out with any stable 5v input such as USB. 
