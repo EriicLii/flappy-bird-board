@@ -1,13 +1,18 @@
 #include <U8glib.h>
 U8GLIB_PCD8544 u8g(13, 11, 9, 8, 10);
 
-int width = 84;
-int height = 48;
+int width = 840; //all coordinates are scaled by 10
+int height = 480;
 
 unsigned long obsTimeToMove;
 unsigned long birdTimeToMove;
 int obsAniSpeed = 40;
-int birdAniSpeed = 80;
+int birdAniSpeed = 67;
+
+int buzzer = 6;
+int jumpSound = 440;
+int scoreSound = 659.3;
+int toneLen = 50;
 
 int button = 7;
 boolean buttonPressed;
@@ -18,30 +23,35 @@ boolean gameOver;
 int points;
 
 //Obstacle settings
-int obsSpeed = 1;
+int obsSpeed = 10;
 int obsNum = 2;
 
-int spawnDamperTop = 20;
-int spawnDamperBot = 6;
+int spawnDamperTop = 200;
+int spawnDamperBot = 60;
 
-int obsWidth = 6;
-int gapHeight = 14;
+int obsWidth = 60;
+int gapHeight = 140;
 
 int obsX[2];
 int obsY[2];
 boolean obsPassed[2];
 
 //Bird settings
-int upAccel = 3;
-int downAccel = 1;
-int birdMaxUpSpeed = -3;
-int birdMaxDownSpeed = 4;
+int upAccel = 30;
+int downAccel = 8;
+int birdMaxUpSpeed = -30;
+int birdMaxDownSpeed = 30;
 int birdSpeed;
 
-int birdSize = 4;
-int birdX = 10;
+int birdSize = 40;
+int birdX = 100;
 int birdY = height/2;
 
+
+void playLoseSound(){
+  tone(buzzer, 87.3, 100);
+  tone(buzzer, 65.4, 500);
+}
 
 void generateObs(){
   for(int i=0; i<obsNum; i++){
@@ -50,7 +60,6 @@ void generateObs(){
     obsPassed[i] = false;
   }
 }
-
 void moveObs(){
   if (millis() > obsTimeToMove) {
     for(int i=0; i<obsNum; i++){
@@ -68,8 +77,8 @@ void moveObs(){
 void drawObs(){
   for(int i=0; i<obsNum; i++){
     if(obsX[i] < width){
-      u8g.drawBox(obsX[i], obsY[i], obsWidth, width-obsY[i]);
-      u8g.drawBox(obsX[i], 0, obsWidth, obsY[i]-gapHeight);
+      u8g.drawBox(obsX[i]/10, obsY[i]/10, obsWidth/10, width/10-obsY[i]/10);
+      u8g.drawBox(obsX[i]/10, 0, obsWidth/10, obsY[i]/10-gapHeight/10);
     }
   }
 }
@@ -78,6 +87,7 @@ boolean buttonPress(){
   int state = digitalRead(button);
   if(!buttonPressed && state==HIGH){
     buttonPressed = true;
+    tone(buzzer, jumpSound, toneLen);
     return true;
   }
   else if(buttonPressed && state==LOW){
@@ -119,7 +129,7 @@ void moveBird(){
 }
 
 void drawBird(){
-  u8g.drawBox(birdX, birdY, birdSize, birdSize);
+  u8g.drawBox(birdX/10, birdY/10, birdSize/10, birdSize/10);
 }
 
 void drawPointsDisplay(){
@@ -128,40 +138,43 @@ void drawPointsDisplay(){
   score += points;
   score.toCharArray(charBuff, 5);
 
-  int shift = score.length()*7/2;
+  int shift = score.length()*7/2*10;
   
   u8g.setFont(u8g_font_freedoomr10r);
-  u8g.drawStr(width/2-shift, 14, charBuff);
+  u8g.drawStr((width/2-shift)/10, 14, charBuff);
 }
 
 void drawStartScreen(){
   u8g.setFont(u8g_font_helvB08);
   u8g.drawStr(14, 14, "Flappy Bird");
   u8g.setFont(u8g_font_micro);
-  u8g.drawStr( 18, 34, "Press Button");
-  u8g.drawStr( 25, 41, "to Start");
+  u8g.drawStr(18, 34, "Press Button");
+  u8g.drawStr(25, 41, "to Start");
 }
 
 void drawGameOverScreen(){
   u8g.setFont(u8g_font_helvB08);
   u8g.drawStr(14, 20, "Game Over");
   u8g.setFont(u8g_font_micro);
-  u8g.drawStr( 19, 34, "Press Button");
-  u8g.drawStr( 23, 41, "to Restart");
+  u8g.drawStr(19, 34, "Press Button");
+  u8g.drawStr(23, 41, "to Restart");
 }
 
 void checkCollision(){
   if(birdY+birdSize >= height){
     gameOver = true;
+    playLoseSound();
   }
   else {
     for(int i=0; i<obsNum; i++){
       if(birdX+birdSize > obsX[i] && birdX < obsX[i]+obsWidth){
         if(birdY < obsY[i]-gapHeight || birdY+birdSize > obsY[i]){
           gameOver = true;
+          playLoseSound();
         }
         else if(birdX > obsX[i] && !obsPassed[i]){
           points ++;
+          tone(buzzer, scoreSound, toneLen);          
           obsPassed[i] = true;
         }
       }
